@@ -7,7 +7,6 @@ import ProductDetails from '../ProductDetails/ProductDetails';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import ProductPage from '../ProductPage/ProductPage';
 
-
 function App() {
   const navigate = useNavigate();
   const [productUrl, setProductUrl] = useState('');
@@ -15,6 +14,9 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
+
+  // Backend URL (use environment variable if available)
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://127.0.0.1:10000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,24 +28,23 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://127.0.0.1:5000/scrape', { product_url: productUrl });
+      const response = await axios.post(`${BACKEND_URL}/scrape`, { product_url: productUrl });
       const newProduct = {
         ...response.data,
         url: productUrl,
         description: response.data.description || 'No description available',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
       setProductData(newProduct);
-      
+
       // Add to search history
-      setSearchHistory(prevHistory => {
+      setSearchHistory((prevHistory) => {
         const updatedHistory = [newProduct, ...prevHistory];
-        return updatedHistory.slice(0, 10);
+        return updatedHistory.slice(0, 10); // Limit history to 10 items
       });
-      
+
       // Navigate to product page
       navigate('/product', { state: { productData: newProduct } });
-      
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to fetch product data');
     } finally {
@@ -54,48 +55,44 @@ function App() {
   return (
     <div className="App">
       <Routes>
-        <Route path="/" element={
-          <>
-            <Header />
-            <div className="search-container">
-              <h1 className="search-title">Find product prices instantly</h1>
-              <p className="search-subtitle">Enter a product URL to check its current price</p>
-              
-              <form onSubmit={handleSubmit} className="search-form">
-                <div className="search-input-container">
-                  <input
-                    type="text"
-                    placeholder="Paste product URL here..."
-                    value={productUrl}
-                    onChange={(e) => setProductUrl(e.target.value)}
-                    className="search-input"
-                  />
-                  <button type="submit" className="search-button" disabled={loading}>
-                    {loading ? (
-                      <span className="loading-spinner"></span>
-                    ) : (
-                      'Search'
-                    )}
-                  </button>
-                </div>
-                {error && <p className="error-message">{error}</p>}
-              </form>
+        <Route
+          path="/"
+          element={
+            <>
+              <Header />
+              <div className="search-container">
+                <h1 className="search-title">Find product prices instantly</h1>
+                <p className="search-subtitle">Enter a product URL to check its current price</p>
 
-              {loading && (
-                <div className="loading-container">
-                  <div className="loading-spinner-large"></div>
-                  <p>Searching for product details...</p>
-                </div>
-              )}
-            </div>
+                <form onSubmit={handleSubmit} className="search-form">
+                  <div className="search-input-container">
+                    <input
+                      type="text"
+                      placeholder="Paste product URL here..."
+                      value={productUrl}
+                      onChange={(e) => setProductUrl(e.target.value)}
+                      className="search-input"
+                    />
+                    <button type="submit" className="search-button" disabled={loading}>
+                      {loading ? <span className="loading-spinner"></span> : 'Search'}
+                    </button>
+                  </div>
+                  {error && <p className="error-message">{error}</p>}
+                </form>
 
-            {productData && <ProductDetails productData={productData} />}
-            
-            
+                {loading && (
+                  <div className="loading-container">
+                    <div className="loading-spinner-large"></div>
+                    <p>Searching for product details...</p>
+                  </div>
+                )}
+              </div>
 
-            <Footer />
-          </>
-        } />
+              {productData && <ProductDetails productData={productData} />}
+              <Footer />
+            </>
+          }
+        />
         <Route path="/product" element={<ProductPage />} />
       </Routes>
     </div>
