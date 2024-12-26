@@ -26,7 +26,7 @@ function App() {
     setLoading(true);
     setError('');
     try {
-      const response = await axios.post('http://127.0.0.1:5000/scrape', { product_url: productUrl });
+      const response = await axios.post('https://getinstock.onrender.com', { product_url: productUrl });
       const newProduct = {
         ...response.data,
         url: productUrl,
